@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { Button } from './ui/button'
 import { useFileSelection } from '../hooks/useFileSelection'
 import { useDragAndDrop } from '../hooks/useDragAndDrop'
 import { useSupabaseStorage } from '../hooks/useSupabaseStorage'
@@ -109,20 +110,13 @@ const FileUpload: React.FC = () => {
       {/* Upload Button */}
       {selectedFiles.length > 0 && (
         <div className="mt-6">
-          <button
+          <Button
             onClick={handleUpload}
             disabled={uploading}
-            className="w-full flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
+            className="w-full"
           >
-            {uploading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Uploading...
-              </>
-            ) : (
-              `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`
-            )}
-          </button>
+            {uploading ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
+          </Button>
         </div>
       )}
 
