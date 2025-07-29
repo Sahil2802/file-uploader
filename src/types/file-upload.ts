@@ -4,6 +4,8 @@ export interface UploadedFile {
   size: number
   type: string
   uploadedAt: Date
+  extractedText?: string
+  textExtractionError?: string
 }
 
 export interface FileValidationResult {

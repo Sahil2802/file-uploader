@@ -67,6 +67,9 @@ export const UploadArea: React.FC<UploadAreaProps> = ({
         <p className="text-sm text-gray-500 mt-4">
           Only PDF, DOCX, and PNG files allowed. Max file size: 50MB
         </p>
+        <p className="text-xs text-gray-400 mt-2">
+          ✨ Text will be automatically extracted from PDF and DOCX files
+        </p>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { generateUniqueFileName } from '../utils/file-utils'
+import { extractTextFromFile } from '../utils/text-extraction'
 import type { UploadedFile } from '../types/file-upload'
 
 const FILE_SIZE_LIMIT = 52428800 // 50MB
@@ -47,6 +48,8 @@ export const useSupabaseStorage = () => {
   }, [])
 
   const uploadFiles = useCallback(async (files: File[]): Promise<UploadedFile[]> => {
+    console.log('📤 Starting upload for files:', files.map(f => f.name))
+    
     if (files.length === 0) {
       setError('Please select files to upload')
       return []
@@ -58,7 +61,9 @@ export const useSupabaseStorage = () => {
 
     try {
       for (const file of files) {
+        console.log(`📁 Processing file: ${file.name}`)
         const fileName = generateUniqueFileName(file.name)
+        console.log(`📝 Generated filename: ${fileName}`)
         
         // Upload file to Supabase Storage
         const { error: uploadError } = await supabase.storage
@@ -66,6 +71,7 @@ export const useSupabaseStorage = () => {
           .upload(fileName, file)
 
         if (uploadError) {
+          console.error('❌ Upload error:', uploadError)
           // Provide specific error messages for common issues
           if (uploadError.message.includes('Bucket not found')) {
             throw new Error(`Bucket '${BUCKET_NAME}' not found. Please create the '${BUCKET_NAME}' bucket in your Supabase Storage dashboard.`)
@@ -78,21 +84,56 @@ export const useSupabaseStorage = () => {
           }
         }
 
+        console.log(`✅ File uploaded successfully: ${fileName}`)
+
         // Get public URL for the uploaded file
         const { data: { publicUrl } } = supabase.storage
           .from(BUCKET_NAME)
           .getPublicUrl(fileName)
 
-        newUploadedFiles.push({
+        console.log(`🔗 Public URL generated: ${publicUrl}`)
+
+        // Extract text from PDF/DOCX files
+        let extractedText: string | undefined
+        let textExtractionError: string | undefined
+
+        const supportedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        const supportedExtensions = ['.pdf', '.docx']
+        
+        if (supportedTypes.includes(file.type) || supportedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+          try {
+            const textResult = await extractTextFromFile(file)
+            if (textResult.success) {
+              extractedText = textResult.text
+            } else {
+              textExtractionError = textResult.error
+            }
+          } catch (err) {
+            textExtractionError = err instanceof Error ? err.message : 'Failed to extract text'
+          }
+        }
+
+        const uploadedFile: UploadedFile = {
           name: file.name,
           url: publicUrl,
           size: file.size,
           type: file.type,
-          uploadedAt: new Date()
-        })
+          uploadedAt: new Date(),
+          ...(extractedText && { extractedText }),
+          ...(textExtractionError && { textExtractionError })
+        }
+
+        newUploadedFiles.push(uploadedFile)
+        console.log(`✨ Added file to uploaded list:`, uploadedFile)
       }
 
-      setUploadedFiles(prev => [...prev, ...newUploadedFiles])
+      console.log(`📋 Total files to add to state:`, newUploadedFiles.length)
+      setUploadedFiles(prev => {
+        console.log(`📊 Previous uploaded files:`, prev.length)
+        const updated = [...prev, ...newUploadedFiles]
+        console.log(`📊 New uploaded files total:`, updated.length)
+        return updated
+      })
       return newUploadedFiles
       
     } catch (err) {
