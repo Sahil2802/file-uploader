@@ -1,6 +1,6 @@
 import React from 'react'
 import { Upload } from 'lucide-react'
-import { ALLOWED_EXTENSIONS } from '../../types/file-upload'
+import { ALLOWED_EXTENSIONS } from '../../types'
 
 interface UploadAreaProps {
   isDragActive: boolean

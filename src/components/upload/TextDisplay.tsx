@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FileText, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react'
-import type { UploadedFile } from '../../types/file-upload'
+import type { UploadedFile } from '../../types'
 
 interface TextDisplayProps {
   file: UploadedFile

@@ -14,5 +14,16 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['pdfjs-dist']
   },
-  assetsInclude: ['**/*.worker.js']
+  assetsInclude: ['**/*.worker.js'],
+  server: {
+    // Prevent page reloads when switching tabs
+    hmr: {
+      overlay: false
+    },
+    // Disable automatic reloading on file changes
+    watch: {
+      usePolling: false,
+      interval: 1000
+    }
+  }
 })

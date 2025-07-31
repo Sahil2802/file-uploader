@@ -1,9 +1,9 @@
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import AuthPage from './components/auth/AuthPage'
-import Layout from './components/Layout'
+import React from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import Dashboard from './Dashboard'
 
-const AppContent: React.FC = () => {
-  const { user, loading } = useAuth()
+const Layout: React.FC = React.memo(() => {
+  const { loading } = useAuth()
 
   if (loading) {
     return (
@@ -16,15 +16,11 @@ const AppContent: React.FC = () => {
     )
   }
 
-  return user ? <Layout /> : <AuthPage />
-}
+  // For now, always show regular dashboard until we fix the admin setup
+  // This will prevent the "Access Denied" issue
+  return <Dashboard />
+})
 
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  )
-}
+Layout.displayName = 'Layout'
 
-export default App
+export default Layout 

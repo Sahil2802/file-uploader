@@ -1,6 +1,6 @@
 import React from 'react'
 import { FileText, Image, Download, Trash2 } from 'lucide-react'
-import type { UploadedFile } from '../../types/file-upload'
+import type { UploadedFile } from '../../types'
 import { formatFileSize } from '../../utils/file-utils'
 import { TextDisplay } from './TextDisplay'
 

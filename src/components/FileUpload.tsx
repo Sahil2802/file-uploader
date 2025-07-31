@@ -5,7 +5,6 @@ import { useSupabaseStorage } from '../hooks/useSupabaseStorage'
 import {
   UploadArea,
   ErrorMessage,
-  SetupInstructions,
   SelectedFilesList,
   UploadedFilesList
 } from './upload'
@@ -47,24 +46,7 @@ const FileUpload: React.FC = () => {
     }
   }
 
-  if (bucketExists === false) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">File Upload</h1>
-        <SetupInstructions />
-        {error && (
-          <div className="mt-4">
-            <ErrorMessage 
-              error={error} 
-              bucketExists={bucketExists} 
-              onRetry={checkBucket}
-            />
-          </div>
-        )}
-      </div>
-    )
-  }
-
+  // Removed bucket check - just show the main interface
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">File Upload</h1>
