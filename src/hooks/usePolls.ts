@@ -267,14 +267,19 @@ export const usePolls = () => {
 
   // Delete a poll by ID
   const deletePoll = async (pollId: string) => {
+    // Optimistically remove poll from UI
+    setPolls(prevPolls => prevPolls.filter(poll => poll.id !== pollId));
     try {
       const { error } = await supabase
         .from('polls')
         .delete()
         .eq('id', pollId);
       if (error) throw error;
-      await fetchPolls();
+      // Optionally refresh in background to sync with backend
+      fetchPolls(false);
     } catch (err) {
+      // If backend fails, revert by refetching
+      fetchPolls(false);
       throw new Error(err instanceof Error ? err.message : 'Failed to delete poll');
     }
   };

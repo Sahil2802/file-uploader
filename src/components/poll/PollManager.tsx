@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { PollQuestion } from '../../types';
 import { PollCreator } from './PollCreator';
 import { PollDisplay } from './PollDisplay';
@@ -10,7 +10,13 @@ export const PollManager: React.FC = () => {
   const [showCreator, setShowCreator] = useState(false);
   const { user } = useAuth();
   const { isAdmin } = useUserProfile(user);
-  const { polls, loading, error, createPoll, vote } = usePolls();
+  const { polls: fetchedPolls, loading, error, createPoll, vote, deletePollQuestion } = usePolls();
+  const [polls, setPolls] = useState(fetchedPolls);
+
+  // Sync local polls state with fetchedPolls
+  useEffect(() => {
+    setPolls(fetchedPolls);
+  }, [fetchedPolls]);
 
   const handleCreatePoll = async (title: string, questions: Omit<PollQuestion, 'id' | 'poll_id' | 'created_at'>[]) => {
     try {
@@ -29,6 +35,17 @@ export const PollManager: React.FC = () => {
       console.error('Failed to vote:', error);
       throw error;
     }
+  };
+
+  // Handler to delete a poll question and update UI instantly
+  const handleDeleteQuestion = async (questionId: string) => {
+    // Remove question from local state instantly
+    setPolls(prevPolls => prevPolls.map(poll => ({
+      ...poll,
+      questions: poll.questions.filter(q => q.id !== questionId)
+    })));
+    // Call backend delete
+    await deletePollQuestion(questionId);
   };
 
   if (!user) {
@@ -99,6 +116,7 @@ export const PollManager: React.FC = () => {
                   question={question}
                   onVote={handleVote}
                   isAdmin={isAdmin}
+                  onDeleteQuestion={handleDeleteQuestion}
                 />
               ))}
             </div>

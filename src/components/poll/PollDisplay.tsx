@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import type { PollQuestion } from '../../types';
-import { ChevronDown, ChevronUp, Pencil, Trash } from 'lucide-react';
+import { ChevronDown, ChevronUp, Pencil, Trash, Download } from 'lucide-react';
 import { ChartContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from '../ui/chart';
 import { usePolls } from '../../hooks/usePolls';
+import { supabase } from '../../lib/supabase';
 
 interface PollDisplayProps {
   question: PollQuestion;
   onVote: (questionId: string, optionId: string) => Promise<void>;
   isAdmin?: boolean;
+  onDeleteQuestion?: (questionId: string) => void;
 }
 
-export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAdmin }) => {
-  const { updatePollQuestion, deletePollQuestion, updatePollOption, deletePollOption } = usePolls();
+export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAdmin, onDeleteQuestion }) => {
+  const { updatePollQuestion, deletePollQuestion, updatePollOption } = usePolls();
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'vote' | 'results'>('vote');
   const [editingTitle, setEditingTitle] = useState(false);
@@ -19,7 +21,6 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
   const [deletingQuestion, setDeletingQuestion] = useState(false);
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
   const [optionInput, setOptionInput] = useState('');
-  const [deletingOptionId, setDeletingOptionId] = useState<string | null>(null);
 
   const handleVote = async (optionId: string) => {
     try {
@@ -30,6 +31,41 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
       });
     } catch (error) {
       console.error('Vote failed:', error);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!question.uploaded_file_url) return;
+    
+    try {
+      // Extract the file path from the URL
+      const url = new URL(question.uploaded_file_url);
+      const path = url.pathname.split('/').slice(-2).join('/'); // Get user_id/filename
+      
+      // Download the file from Supabase storage
+      const { data, error } = await supabase.storage
+        .from('uploads')
+        .download(path);
+      
+      if (error) {
+        console.error('Download error:', error);
+        alert('Failed to download file');
+        return;
+      }
+      
+      // Create a download link
+      const blob = new Blob([data]);
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = question.uploaded_file_name || 'downloaded-file';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file');
     }
   };
 
@@ -52,6 +88,8 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
                 e.preventDefault();
                 await updatePollQuestion(question.id, { question: titleInput });
                 setEditingTitle(false);
+                // Update the question object to reflect the change immediately
+                question.question = titleInput;
               }}
               className="flex gap-2 items-center"
               onClick={e => e.stopPropagation()}
@@ -103,7 +141,13 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
         <div className="p-4 bg-red-50 border-t border-b border-red-200 flex items-center justify-between">
           <span>Are you sure you want to delete this poll?</span>
           <div className="flex gap-2">
-            <button className="text-xs text-red-600" onClick={async e => { e.stopPropagation(); await deletePollQuestion(question.id); setDeletingQuestion(false); }}>Delete</button>
+            <button className="text-xs text-red-600" onClick={async e => {
+              e.stopPropagation();
+              if (onDeleteQuestion) {
+                await onDeleteQuestion(question.id);
+              }
+              setDeletingQuestion(false);
+            }}>Delete</button>
             <button className="text-xs text-gray-600" onClick={e => { e.stopPropagation(); setDeletingQuestion(false); }}>Cancel</button>
           </div>
         </div>
@@ -112,6 +156,45 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
       {/* Poll Content - Collapsible */}
       {isExpanded && (
         <div className="border-t border-gray-200">
+          {/* Description Section */}
+          {question.description && (
+            <div className="p-4 border-b border-gray-100">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
+                {/* Show image if it's an image file */}
+                {question.uploaded_file_url && question.uploaded_file_type?.startsWith('image/') && (
+                  <div className="mb-3">
+                    <img
+                      src={question.uploaded_file_url}
+                      alt="Uploaded image"
+                      className="max-w-full h-auto max-h-64 rounded border mx-auto"
+                    />
+                  </div>
+                )}
+                <div className="text-sm text-gray-600 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                  {question.description}
+                </div>
+                {question.uploaded_file_url && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Attached file:</span>
+                        <span className="text-xs font-medium text-gray-700">{question.uploaded_file_name}</span>
+                      </div>
+                      <button
+                        onClick={handleDownload}
+                        className="flex items-center space-x-1 text-xs text-blue-600 hover:underline cursor-pointer"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Tabs */}
           <div className="flex border-b border-gray-100 bg-gray-50">
             <button
@@ -141,6 +224,8 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
                             e.preventDefault();
                             await updatePollOption(option.id, { option_text: optionInput });
                             setEditingOptionId(null);
+                            // Update the option object to reflect the change immediately
+                            option.option_text = optionInput;
                           }}
                           className="flex gap-2 items-center"
                         >
@@ -173,21 +258,6 @@ export const PollDisplay: React.FC<PollDisplayProps> = ({ question, onVote, isAd
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button
-                          className="p-1 text-red-600 hover:bg-red-100 rounded cursor-pointer"
-                          aria-label="Delete option"
-                          onClick={() => setDeletingOptionId(option.id)}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                    {/* Delete confirmation dialog for option */}
-                    {isAdmin && deletingOptionId === option.id && (
-                      <div className="ml-2 flex gap-2 items-center">
-                        <span className="text-xs">Delete?</span>
-                        <button className="text-xs text-red-600" onClick={async () => { await deletePollOption(option.id); setDeletingOptionId(null); }}>Yes</button>
-                        <button className="text-xs text-gray-600" onClick={() => setDeletingOptionId(null)}>No</button>
                       </div>
                     )}
                   </div>

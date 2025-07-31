@@ -1,26 +1,39 @@
-import React, { useState } from 'react';
-import type { PollQuestion } from '../../types';
-import { Button } from '../ui/button';
-import { useSupabaseStorage } from '../../hooks/useSupabaseStorage';
-import { validateFiles } from '../../utils/file-utils';
-import { Upload, X, FileText, Image, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from "react";
+import type { PollQuestion } from "../../types";
+import { Button } from "../ui/button";
+import { useSupabaseStorage } from "../../hooks/useSupabaseStorage";
+import { validateFiles } from "../../utils/file-utils";
+import {
+  Upload,
+  X,
+  FileText,
+  Image,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 interface PollCreatorProps {
-  onCreatePoll: (title: string, questions: Omit<PollQuestion, 'id' | 'poll_id' | 'created_at'>[]) => Promise<void>;
+  onCreatePoll: (
+    title: string,
+    questions: Omit<PollQuestion, "id" | "poll_id" | "created_at">[]
+  ) => Promise<void>;
   onCancel: () => void;
 }
 
-export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel }) => {
-  const [question, setQuestion] = useState('');
-  const [description, setDescription] = useState('');
-  const [options, setOptions] = useState<string[]>(['', '', '', '']);
+export const PollCreator: React.FC<PollCreatorProps> = ({
+  onCreatePoll,
+  onCancel,
+}) => {
+  const [question, setQuestion] = useState("");
+  const [description, setDescription] = useState("");
+  const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string>('');
-  const [extractedText, setExtractedText] = useState<string>('');
+  const [fileUrl, setFileUrl] = useState<string>("");
+  const [extractedText, setExtractedText] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showExtractedText, setShowExtractedText] = useState(false);
-  
+
   const { uploadFiles } = useSupabaseStorage();
 
   const handleOptionChange = (index: number, value: string) => {
@@ -35,20 +48,20 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
 
     try {
       setIsUploading(true);
-      
+
       // Validate file
       const validation = validateFiles([file]);
       if (validation.invalidFiles.length > 0) {
-        alert(validation.errors.join('\n'));
+        alert(validation.errors.join("\n"));
         return;
       }
 
       // Upload file to Supabase
       const uploadedFiles = await uploadFiles([file]);
       if (uploadedFiles.length === 0) {
-        throw new Error('File upload failed');
+        throw new Error("File upload failed");
       }
-      
+
       const uploadedFileData = uploadedFiles[0];
       setUploadedFile(file);
       setFileUrl(uploadedFileData.url);
@@ -58,20 +71,23 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
         setExtractedText(uploadedFileData.extractedText);
         setDescription(uploadedFileData.extractedText); // Auto-set as description
         setShowExtractedText(true); // Show the accordion
-      } else if (file.type.startsWith('image/')) {
+      } else if (file.type.startsWith("image/")) {
         // For images, use the filename as description and show the accordion
-        setExtractedText('');
+        setExtractedText("");
         setDescription(`Image: ${file.name}`);
         setShowExtractedText(true); // Show the accordion to display the image
       } else if (uploadedFileData.textExtractionError) {
-        console.error('Text extraction failed:', uploadedFileData.textExtractionError);
-        setExtractedText('');
+        console.error(
+          "Text extraction failed:",
+          uploadedFileData.textExtractionError
+        );
+        setExtractedText("");
       } else {
-        setExtractedText('');
+        setExtractedText("");
       }
     } catch (error) {
-      console.error('File upload failed:', error);
-      alert('Failed to upload file. Please try again.');
+      console.error("File upload failed:", error);
+      alert("Failed to upload file. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -79,52 +95,53 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
 
   const removeFile = () => {
     setUploadedFile(null);
-    setFileUrl('');
-    setExtractedText('');
-    setDescription(''); // Clear description when file is removed
+    setFileUrl("");
+    setExtractedText("");
+    setDescription(""); // Clear description when file is removed
     setShowExtractedText(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!question.trim()) {
-      alert('Please enter a question');
+      alert("Please enter a question");
       return;
     }
 
-    if (options.some(opt => !opt.trim())) {
-      alert('Please fill in all four options');
+    if (options.some((opt) => !opt.trim())) {
+      alert("Please fill in all four options");
       return;
     }
 
     try {
       setIsCreating(true);
-      
-      const pollQuestion: Omit<PollQuestion, 'id' | 'poll_id' | 'created_at'> = {
-        question: question.trim(),
-        description: description.trim() || undefined,
-        uploaded_file_url: fileUrl || undefined,
-        uploaded_file_name: uploadedFile?.name || undefined,
-        uploaded_file_type: uploadedFile?.type || undefined,
-        extracted_text: extractedText || undefined,
-        options: options.map((text, index) => ({
-          id: '', // Will be set by database
-          option_text: text.trim(),
-          option_order: index
-        }))
-      };
 
-      await onCreatePoll('', [pollQuestion]);
-      
+      const pollQuestion: Omit<PollQuestion, "id" | "poll_id" | "created_at"> =
+        {
+          question: question.trim(),
+          description: description.trim() || undefined,
+          uploaded_file_url: fileUrl || undefined,
+          uploaded_file_name: uploadedFile?.name || undefined,
+          uploaded_file_type: uploadedFile?.type || undefined,
+          extracted_text: extractedText || undefined,
+          options: options.map((text, index) => ({
+            id: "", // Will be set by database
+            option_text: text.trim(),
+            option_order: index,
+          })),
+        };
+
+      await onCreatePoll("", [pollQuestion]);
+
       // Reset form
-      setQuestion('');
-      setDescription('');
-      setOptions(['', '', '', '']);
+      setQuestion("");
+      setDescription("");
+      setOptions(["", "", "", ""]);
       removeFile();
     } catch (error) {
-      console.error('Failed to create poll:', error);
-      alert('Failed to create poll. Please try again.');
+      console.error("Failed to create poll:", error);
+      alert("Failed to create poll. Please try again.");
     } finally {
       setIsCreating(false);
     }
@@ -133,9 +150,11 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
   const renderFilePreview = () => {
     if (!uploadedFile) return null;
 
-    const isImage = uploadedFile.type.startsWith('image/');
-    const isPdf = uploadedFile.type === 'application/pdf';
-    const isDocx = uploadedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const isImage = uploadedFile.type.startsWith("image/");
+    const isPdf = uploadedFile.type === "application/pdf";
+    const isDocx =
+      uploadedFile.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     return (
       <div className="mt-4 p-4 border border-gray-200 rounded-lg">
@@ -143,7 +162,9 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
           <div className="flex items-center space-x-2">
             {isImage && <Image className="w-5 h-5 text-blue-500" />}
             {(isPdf || isDocx) && <FileText className="w-5 h-5 text-red-500" />}
-            <span className="text-sm font-medium text-gray-700">{uploadedFile.name}</span>
+            <span className="text-sm font-medium text-gray-700">
+              {uploadedFile.name}
+            </span>
           </div>
           <button
             type="button"
@@ -175,10 +196,13 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
           Cancel
         </Button>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="question"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Question
           </label>
           <input
@@ -192,7 +216,8 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
         </div>
 
         {/* Accordion for extracted text description or image */}
-        {(extractedText || (uploadedFile && uploadedFile.type.startsWith('image/'))) && (
+        {(extractedText ||
+          (uploadedFile && uploadedFile.type.startsWith("image/"))) && (
           <div className="border border-gray-200 rounded-lg">
             <button
               type="button"
@@ -200,7 +225,9 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
               className="w-full flex justify-between items-center p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
             >
               <span className="text-sm font-medium text-gray-700">
-                {extractedText ? 'Description (from uploaded file)' : 'Uploaded Image'}
+                {extractedText
+                  ? "Description (from uploaded file)"
+                  : "Uploaded Image"}
               </span>
               {showExtractedText ? (
                 <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -214,14 +241,18 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
                   <div className="max-h-40 overflow-y-auto text-sm text-gray-600 whitespace-pre-wrap">
                     {extractedText}
                   </div>
-                ) : uploadedFile && uploadedFile.type.startsWith('image/') && fileUrl ? (
+                ) : uploadedFile &&
+                  uploadedFile.type.startsWith("image/") &&
+                  fileUrl ? (
                   <div className="text-center">
                     <img
                       src={fileUrl}
                       alt="Uploaded image"
                       className="max-w-full h-auto max-h-64 rounded border mx-auto"
                     />
-                    <p className="text-sm text-gray-600 mt-2">{uploadedFile.name}</p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {uploadedFile.name}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -248,7 +279,9 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
             >
               <Upload className="w-8 h-8 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {isUploading ? 'Uploading...' : 'Click to upload PDF, DOCX, or Image files'}
+                {isUploading
+                  ? "Uploading..."
+                  : "Click to upload PDF, DOCX, or Image files"}
               </span>
             </label>
           </div>
@@ -272,12 +305,12 @@ export const PollCreator: React.FC<PollCreatorProps> = ({ onCreatePoll, onCancel
           ))}
         </div>
 
-        <Button 
-          type="submit" 
-          className="w-full bg-blue-600 text-white hover:bg-blue-700 transition-colors" 
+        <Button
+          type="submit"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           disabled={isCreating || isUploading}
         >
-          {isCreating ? 'Creating Poll...' : 'Create Poll'}
+          {isCreating ? "Creating Poll..." : "Create Poll"}
         </Button>
       </form>
     </div>

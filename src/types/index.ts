@@ -35,7 +35,15 @@ export const ALLOWED_FILE_TYPES = [
   "image/webp", // WebP files
 ];
 
-export const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".png", ".jpg", ".jpeg", ".gif", ".webp"];
+export const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".docx",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+];
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 // Polling system types
