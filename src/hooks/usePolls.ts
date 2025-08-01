@@ -74,17 +74,22 @@ export const usePolls = () => {
                     data: { session },
                   } = await supabase.auth.getSession();
                   if (session?.user) {
-                    const { data } = await supabase
+                    const { data, error } = await supabase
                       .from("poll_votes")
                       .select("option_id")
                       .eq("question_id", question.id)
                       .eq("user_id", session.user.id)
-                      .single();
-                    userVote = data;
+                      .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors when no row is found
+
+                    if (error) {
+                      console.warn("Error checking user vote:", error);
+                    } else {
+                      userVote = data;
+                    }
                   }
                 } catch (error) {
                   // User not authenticated or no vote found - that's okay
-                  console.log("No user vote found:", error);
+                  console.warn("No user vote found:", error);
                 }
 
                 return {
@@ -234,26 +239,40 @@ export const usePolls = () => {
       );
 
       // Then update the database in the background
-      const { data: existingVote } = await supabase
+      const { data: existingVote, error: voteCheckError } = await supabase
         .from("poll_votes")
         .select("id")
         .eq("question_id", questionId)
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single()
+
+      if (voteCheckError) {
+        console.warn("Error checking existing vote:", voteCheckError);
+      }
 
       if (existingVote) {
         // Update existing vote
-        await supabase
+        const { error: updateError } = await supabase
           .from("poll_votes")
           .update({ option_id: optionId })
           .eq("id", existingVote.id);
+
+        if (updateError) {
+          console.error("Error updating vote:", updateError);
+        }
       } else {
         // Create new vote
-        await supabase.from("poll_votes").insert({
-          question_id: questionId,
-          option_id: optionId,
-          user_id: session.user.id,
-        });
+        const { error: insertError } = await supabase
+          .from("poll_votes")
+          .insert({
+            question_id: questionId,
+            option_id: optionId,
+            user_id: session.user.id,
+          });
+
+        if (insertError) {
+          console.error("Error creating vote:", insertError);
+        }
       }
 
       // Refresh data silently in background to sync with actual database state
@@ -268,19 +287,18 @@ export const usePolls = () => {
   // Delete a poll by ID
   const deletePoll = async (pollId: string) => {
     // Optimistically remove poll from UI
-    setPolls(prevPolls => prevPolls.filter(poll => poll.id !== pollId));
+    setPolls((prevPolls) => prevPolls.filter((poll) => poll.id !== pollId));
     try {
-      const { error } = await supabase
-        .from('polls')
-        .delete()
-        .eq('id', pollId);
+      const { error } = await supabase.from("polls").delete().eq("id", pollId);
       if (error) throw error;
       // Optionally refresh in background to sync with backend
       fetchPolls(false);
     } catch (err) {
       // If backend fails, revert by refetching
       fetchPolls(false);
-      throw new Error(err instanceof Error ? err.message : 'Failed to delete poll');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to delete poll"
+      );
     }
   };
 
@@ -288,13 +306,15 @@ export const usePolls = () => {
   const updatePoll = async (pollId: string, title: string) => {
     try {
       const { error } = await supabase
-        .from('polls')
+        .from("polls")
         .update({ title })
-        .eq('id', pollId);
+        .eq("id", pollId);
       if (error) throw error;
       await fetchPolls();
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to update poll');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to update poll"
+      );
     }
   };
 
@@ -302,27 +322,34 @@ export const usePolls = () => {
   const deletePollQuestion = async (questionId: string) => {
     try {
       const { error } = await supabase
-        .from('poll_questions')
+        .from("poll_questions")
         .delete()
-        .eq('id', questionId);
+        .eq("id", questionId);
       if (error) throw error;
       await fetchPolls();
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to delete poll question');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to delete poll question"
+      );
     }
   };
 
   // Update a poll question by ID
-  const updatePollQuestion = async (questionId: string, updates: Partial<{ question: string; description?: string }>) => {
+  const updatePollQuestion = async (
+    questionId: string,
+    updates: Partial<{ question: string; description?: string }>
+  ) => {
     try {
       const { error } = await supabase
-        .from('poll_questions')
+        .from("poll_questions")
         .update(updates)
-        .eq('id', questionId);
+        .eq("id", questionId);
       if (error) throw error;
       await fetchPolls();
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to update poll question');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to update poll question"
+      );
     }
   };
 
@@ -330,27 +357,34 @@ export const usePolls = () => {
   const deletePollOption = async (optionId: string) => {
     try {
       const { error } = await supabase
-        .from('poll_options')
+        .from("poll_options")
         .delete()
-        .eq('id', optionId);
+        .eq("id", optionId);
       if (error) throw error;
       await fetchPolls();
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to delete poll option');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to delete poll option"
+      );
     }
   };
 
   // Update a poll option by ID
-  const updatePollOption = async (optionId: string, updates: Partial<{ option_text: string }>) => {
+  const updatePollOption = async (
+    optionId: string,
+    updates: Partial<{ option_text: string }>
+  ) => {
     try {
       const { error } = await supabase
-        .from('poll_options')
+        .from("poll_options")
         .update(updates)
-        .eq('id', optionId);
+        .eq("id", optionId);
       if (error) throw error;
       await fetchPolls();
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to update poll option');
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to update poll option"
+      );
     }
   };
 

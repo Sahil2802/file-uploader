@@ -307,7 +307,7 @@ export const PollCreator: React.FC<PollCreatorProps> = ({
 
         <Button
           type="submit"
-          className="w-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="cursor-pointer w-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           disabled={isCreating || isUploading}
         >
           {isCreating ? "Creating Poll..." : "Create Poll"}

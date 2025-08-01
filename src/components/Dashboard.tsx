@@ -1,17 +1,22 @@
-import React from 'react'
-import { PollManager } from './poll'
-import { useAuth } from '../contexts/AuthContext'
-import { useUserProfile } from '../hooks/useUserProfile'
-import { Button } from './ui/button'
-import { LogOut, User, BarChart3, Shield } from 'lucide-react'
+import React from "react";
+import { PollManager } from "./poll";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserProfile } from "../hooks/useUserProfile";
+import { Button } from "./ui/button";
+import { LogOut, User, BarChart3, Shield } from "lucide-react";
 
 const Dashboard: React.FC = () => {
-  const { user, signOut } = useAuth()
-  const { isAdmin } = useUserProfile(user)
+  const { user, signOut } = useAuth();
+  const { isAdmin } = useUserProfile(user);
 
   const handleLogout = async () => {
-    await signOut()
-  }
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if server logout fails, the local state should be cleared
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -21,7 +26,9 @@ const Dashboard: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <BarChart3 className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">Polls Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Polls Dashboard
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -38,10 +45,10 @@ const Dashboard: React.FC = () => {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 cursor-pointer"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <LogOut className=" w-4 h-4" />
+                <span className="">Logout</span>
               </Button>
             </div>
           </div>
@@ -53,7 +60,7 @@ const Dashboard: React.FC = () => {
         <PollManager />
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard 
+export default Dashboard;
