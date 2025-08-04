@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,18 +12,16 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['pdfjs-dist']
+    exclude: [],
   },
-  assetsInclude: ['**/*.worker.js'],
   server: {
-    // Prevent page reloads when switching tabs
     hmr: {
-      overlay: false
+      overlay: false,
+      clientPort: 5173,
     },
-    // Disable automatic reloading on file changes
     watch: {
       usePolling: false,
-      interval: 1000
-    }
-  }
-})
+      ignored: ["**/node_modules/**", "**/.git/**"],
+    },
+  },
+});

@@ -1,221 +1,229 @@
-# File Upload Assignment
+# Event Registration App
 
-A modern file upload application with authentication and role-based access control built with React, TypeScript, and Supabase.
+A modern, full-stack web application for event registration and management. Built with React, TypeScript, and Supabase, this application provides a seamless experience for users to browse and register for events, while offering administrators comprehensive event management capabilities.
 
-## Features
+## ✨ Features
 
-- 🔐 User authentication (login/signup) with Supabase
-- 👥 Role-based access control (User/Admin)
-- 📊 Admin dashboard with user management
-- 📁 Drag and drop file upload
-- 📄 Support for PDF, DOCX, and TXT files
-- 📝 Text extraction from uploaded files
-- 🎨 Modern, responsive UI with Tailwind CSS
-- 🔒 Secure file storage with Supabase Storage
+### For Users
 
-## Prerequisites
+- **Event Browsing**: View all available events with details like name and date
+- **Event Registration**: Register for events with a single click
+- **Personal Dashboard**: View and manage your registered events
+- **Profile Management**: User profile with avatar dropdown and logout functionality
+- **Responsive Design**: Optimized for desktop and mobile devices
 
-- Node.js (v16 or higher)
-- npm or yarn
-- A Supabase account and project
+### For Administrators
 
-## Setup
+- **Event Management**: Create, edit, and delete events
+- **Registration Analytics**: View registration statistics and analytics
+- **User Management**: Monitor user registrations and activity
+- **Admin Dashboard**: Comprehensive overview of platform metrics
+- **Real-time Updates**: Live data synchronization across all users
 
-### 1. Clone the repository
+### Technical Features
 
-```bash
-git clone <repository-url>
-cd file-upload-assignment
-```
+- **Authentication**: Secure user authentication with Supabase Auth
+- **Real-time Database**: PostgreSQL with Row Level Security (RLS)
+- **Modern UI**: Clean, intuitive interface with Tailwind CSS
+- **Type Safety**: Full TypeScript implementation
+- **Responsive Design**: Mobile-first responsive layout
+- **Error Handling**: Comprehensive error handling and user feedback
+- **Performance**: Optimized with Vite for fast development and builds
 
-### 2. Install dependencies
+## 🚀 Getting Started
 
-```bash
-npm install
-```
+### Prerequisites
 
-### 3. Set up Supabase
+Before running this project, make sure you have the following installed:
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to your project dashboard
-3. Navigate to Settings > API
-4. Copy your Project URL and anon/public key
+- **Node.js** (version 18 or higher)
+- **npm** (comes with Node.js)
+- **Supabase Account** (for backend services)
 
-### 4. Configure environment variables
+### Installation
 
-Create a `.env` file in the root directory:
+1. **Clone the repository:**
 
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+   ```bash
+   git clone https://github.com/Sahil2802/file-uploader.git
+   cd file-upload-assignment
+   ```
 
-### 5. Set up Supabase Database
+2. **Install dependencies:**
 
-Run the SQL script in your Supabase SQL Editor:
+   ```bash
+   npm install
+   ```
 
-```sql
--- Create users table for role-based authentication
-CREATE TABLE IF NOT EXISTS public.users (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    email TEXT NOT NULL,
-    role TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+3. **Set up environment variables:**
 
--- Enable Row Level Security
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+   Copy the example environment file:
 
--- Create policies
--- Users can read their own profile
-CREATE POLICY "Users can view own profile" ON public.users
-    FOR SELECT USING (auth.uid() = id);
+   ```bash
+   cp .env.example .env
+   ```
 
--- Users can update their own profile (except role)
-CREATE POLICY "Users can update own profile" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
+   Edit the `.env` file and add your Supabase credentials:
 
--- Admins can read all profiles
-CREATE POLICY "Admins can view all profiles" ON public.users
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.users
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
+   ```bash
+   VITE_SUPABASE_URL=your_supabase_project_url_here
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   ```
 
--- Admins can update all profiles
-CREATE POLICY "Admins can update all profiles" ON public.users
-    FOR UPDATE USING (
-        EXISTS (
-            SELECT 1 FROM public.users
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
+4. **Set up Supabase Database:**
 
--- Allow insert for new users
-CREATE POLICY "Allow insert for new users" ON public.users
-    FOR INSERT WITH CHECK (auth.uid() = id);
+   In your Supabase project, run the following SQL to create the necessary tables:
 
--- Create function to automatically create user profile on signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.users (email, role)
-    VALUES (NEW.email, 'user');
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+   ```sql
+   -- Create events table
+   CREATE TABLE events (
+     id SERIAL PRIMARY KEY,
+     name VARCHAR(255) NOT NULL,
+     date DATE NOT NULL
+   );
 
--- Create trigger to automatically create user profile
-CREATE OR REPLACE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-```
+   -- Create registrations table
+   CREATE TABLE registrations (
+     id SERIAL PRIMARY KEY,
+     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+     event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+     UNIQUE(user_id, event_id)
+   );
 
-### 6. Create your first admin user
+   -- Enable Row Level Security
+   ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
 
-After signing up with your email, run this SQL to make yourself an admin:
+   -- Create policies for events table
+   CREATE POLICY "Events are viewable by everyone" ON events
+     FOR SELECT USING (true);
 
-```sql
-UPDATE public.users
-SET role = 'admin'
-WHERE email = 'your-email@example.com';
-```
+   CREATE POLICY "Events can be inserted by authenticated users" ON events
+     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-### 7. Set up Supabase Storage
+   CREATE POLICY "Events can be updated by authenticated users" ON events
+     FOR UPDATE USING (auth.role() = 'authenticated');
 
-1. In your Supabase dashboard, go to Storage
-2. Create a new bucket called `uploads`
-3. Set the bucket's privacy settings to allow authenticated users to upload files
-4. Configure Row Level Security (RLS) policies as needed
+   CREATE POLICY "Events can be deleted by authenticated users" ON events
+     FOR DELETE USING (auth.role() = 'authenticated');
 
-### 8. Run the development server
+   -- Create policies for registrations table
+   CREATE POLICY "Users can view their own registrations" ON registrations
+     FOR SELECT USING (auth.uid() = user_id);
 
-```bash
-npm run dev
-```
+   CREATE POLICY "Users can insert their own registrations" ON registrations
+     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-The application will be available at `http://localhost:5173`
+   CREATE POLICY "Users can delete their own registrations" ON registrations
+     FOR DELETE USING (auth.uid() = user_id);
 
-## Usage
+   -- Insert sample events
+   INSERT INTO events (name, date) VALUES
+   ('Tech Conference 2025', '2025-03-15'),
+   ('Web Development Workshop', '2025-04-20'),
+   ('AI & Machine Learning Summit', '2025-05-10'),
+   ('Mobile App Development Bootcamp', '2025-06-05'),
+   ('DevOps Best Practices Seminar', '2025-07-12');
+   ```
 
-### For Regular Users:
+5. **Start the development server:**
 
-1. **Sign up**: Create a new account with your email and password
-2. **Sign in**: Use your credentials to log in
-3. **Upload files**: Drag and drop or click to select files (PDF, DOCX, TXT)
-4. **View extracted text**: The application will extract and display text from your uploaded files
-5. **Logout**: Click the logout button in the header to sign out
+   ```bash
+   npm run dev
+   ```
 
-### For Admin Users:
+6. **Open your browser:**
+   Navigate to [http://localhost:5173](http://localhost:5173) to view the application.
 
-1. **Admin Dashboard**: Access comprehensive user management and system statistics
-2. **User Management**: View all users, their file counts, and storage usage
-3. **Role Management**: Promote users to admin or demote admins to regular users
-4. **System Statistics**: Monitor total users, files, and storage usage
+## 📝 Available Scripts
 
-## File Support
+In the project directory, you can run:
 
-- **PDF files**: Text extraction using PDF.js
-- **DOCX files**: Text extraction using Mammoth.js
-- **TXT files**: Direct text reading
+### `npm run dev`
 
-## Technologies Used
+Starts the development server with hot-reload enabled.
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-- **Frontend**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS
-- **Backend**: Supabase (Auth, Storage, Database)
-- **File Processing**: PDF.js, Mammoth.js
-- **UI Components**: Radix UI, Lucide React icons
+### `npm run build`
+
+Builds the app for production to the `dist` folder.
+
+The build is optimized and minified for the best performance.
+
+### `npm run lint`
+
+Runs ESLint to check for code quality and style issues.
+
+### `npm run preview`
+
+Serves the production build locally for testing before deployment.
 
 ## Project Structure
 
 ```
 src/
-├── components/
-│   ├── auth/           # Authentication components
-│   ├── admin/          # Admin dashboard components
-│   ├── ui/             # Reusable UI components
-│   └── upload/         # File upload components
-├── contexts/           # React contexts
-├── hooks/              # Custom React hooks
-├── lib/                # Utility libraries
-├── types/              # TypeScript type definitions
-└── utils/              # Utility functions
+├── components/           # React components
+│   ├── admin/           # Admin-specific components
+│   ├── auth/            # Authentication components
+│   ├── events/          # Event-related components
+│   └── ui/              # Reusable UI components
+├── contexts/            # React Context providers
+├── hooks/               # Custom React hooks
+├── lib/                 # Third-party library configurations
+├── types/               # TypeScript type definitions
+└── utils/               # Utility functions
 ```
 
-## Development
+## 🛠️ Built With
 
-```bash
-# Start development server
-npm run dev
+- **[React 19](https://reactjs.org/)** - Modern JavaScript library for building user interfaces
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript development
+- **[Vite](https://vitejs.dev/)** - Next-generation frontend tooling
+- **[Supabase](https://supabase.io/)** - Open-source Firebase alternative with PostgreSQL
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[Lucide React](https://lucide.dev/)** - Beautiful & consistent icon library
 
-# Build for production
-npm run build
+## 🔐 Authentication
 
-# Preview production build
-npm run preview
+The application uses Supabase Auth for user authentication:
 
-# Run linting
-npm run lint
-```
+- Email/Password authentication
+- Secure session management
+- Row Level Security (RLS) for data protection
+- Automatic user profile creation
 
-## Environment Variables
+## 🎨 UI/UX Features
 
-| Variable                 | Description                   | Required |
-| ------------------------ | ----------------------------- | -------- |
-| `VITE_SUPABASE_URL`      | Your Supabase project URL     | Yes      |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon/public key | Yes      |
+- **Responsive Design**: Works seamlessly on desktop and mobile
+- **Modern Interface**: Clean, intuitive design with smooth animations
+- **Modal Confirmations**: User-friendly confirmation dialogs
+- **Loading States**: Visual feedback for all user actions
+- **Error Handling**: Graceful error messages and recovery
+- **Profile Avatar**: Dropdown menu with user information and logout
 
-## Contributing
+## 🚀 Deployment
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+The application can be deployed to various platforms:
 
-## License
+1. **Vercel**: Connect your GitHub repository for automatic deployments
+2. **Netlify**: Deploy with continuous integration from Git
+3. **Supabase**: Use Supabase's built-in hosting features
+
+Make sure to set your environment variables in your deployment platform's settings.
+
+## 📄 License
 
 This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📧 Contact
+
+For any questions or support, please reach out to the development team.

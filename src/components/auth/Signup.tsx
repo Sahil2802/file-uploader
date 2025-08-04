@@ -14,6 +14,30 @@ const Signup: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
 
+  const getSignupErrorMessage = (error: Error | null): string => {
+    const message = error?.message || "";
+
+    // Handle specific Supabase signup error messages
+    if (message.includes("User already registered")) {
+      return "An account with this email address already exists. Please sign in instead.";
+    }
+
+    if (message.includes("Password should be at least")) {
+      return "Password must be at least 6 characters long.";
+    }
+
+    if (message.includes("Invalid email")) {
+      return "Please enter a valid email address.";
+    }
+
+    if (message.includes("Signup is disabled")) {
+      return "Account registration is currently disabled. Please contact support.";
+    }
+
+    // Default fallback
+    return message || "Failed to create account. Please try again.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,15 +62,19 @@ const Signup: React.FC = () => {
       return;
     }
 
-    const result = await signUp(email, password);
+    try {
+      const { error } = await signUp(email, password);
 
-    if (result) {
-      setSuccess(true);
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-    } else {
-      setError("Failed to create account. Please try again.");
+      if (error) {
+        setError(getSignupErrorMessage(error));
+      } else {
+        setSuccess(true);
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+      }
+    } catch {
+      setError("An unexpected error occurred");
     }
 
     setLoading(false);

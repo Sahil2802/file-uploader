@@ -13,7 +13,6 @@ import { supabase } from "../lib/supabase";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -34,27 +33,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    // Get initial session - no loading states, just set the data
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setInitialLoad(true); // Mark as initialized, but never show loading
+        }
+      } catch {
+        if (mounted) {
+          setInitialLoad(true);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes - never show loading
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        // Never set loading states during auth changes
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [initialLoad]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -82,11 +102,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Clear local state immediately
       setUser(null);
       setSession(null);
+      // Always redirect to home on sign out
+      if (window.location.pathname !== "/") {
+        window.history.replaceState(null, "", "/");
+      }
     } catch (error) {
       console.error("Failed to sign out:", error);
       // Still clear local state even if server signout fails
       setUser(null);
       setSession(null);
+      // Always redirect to home on sign out
+      if (window.location.pathname !== "/") {
+        window.history.replaceState(null, "", "/");
+      }
     }
   }, []);
 
@@ -94,12 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     () => ({
       user,
       session,
-      loading,
       signIn,
       signUp,
       signOut,
     }),
-    [user, session, loading, signIn, signUp, signOut]
+    [user, session, signIn, signUp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

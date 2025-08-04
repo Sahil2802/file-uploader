@@ -11,6 +11,37 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const { signIn } = useAuth();
 
+  const getErrorMessage = (error: Error | null): string => {
+    const message = error?.message || "";
+
+    // Handle specific Supabase auth error messages
+    if (message.includes("Invalid login credentials")) {
+      return "Invalid email or password. Please check your credentials and try again.";
+    }
+
+    if (message.includes("Email not confirmed")) {
+      return "Please check your email and click the confirmation link before signing in.";
+    }
+
+    if (message.includes("Too many requests")) {
+      return "Too many login attempts. Please wait a moment before trying again.";
+    }
+
+    if (message.includes("User not found")) {
+      return "No account exists with this email address. Would you like to create a new account?";
+    }
+
+    if (message.includes("Invalid password")) {
+      return "Incorrect password. Please try again.";
+    }
+
+    // Default fallback
+    return (
+      message ||
+      "Unable to sign in. Please check your credentials and try again."
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -22,10 +53,14 @@ const Login: React.FC = () => {
       return;
     }
 
-    const success = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (!success) {
-      setError("Invalid email or password");
+      if (error) {
+        setError(getErrorMessage(error));
+      }
+    } catch {
+      setError("An unexpected error occurred");
     }
 
     setLoading(false);
