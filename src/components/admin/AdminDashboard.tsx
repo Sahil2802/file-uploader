@@ -253,7 +253,7 @@ const AdminDashboard: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Unique Users</CardTitle>
+                <CardTitle className="text-lg">users</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-green-600">
