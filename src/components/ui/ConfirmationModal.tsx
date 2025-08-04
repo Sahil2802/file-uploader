@@ -40,7 +40,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 cursor-pointer" />
         </button>
 
         {/* Icon */}
@@ -59,7 +59,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Button
             onClick={onClose}
             variant="outline"
-            className="flex-1"
+            className="flex-1 cursor-pointer"
             disabled={loading}
           >
             Cancel
@@ -67,7 +67,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Button
             onClick={onConfirm}
             variant={confirmVariant}
-            className="flex-1"
+            className="flex-1 cursor-pointer"
             disabled={loading}
           >
             {loading ? "Processing..." : confirmText}

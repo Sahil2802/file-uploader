@@ -3,3 +3,7 @@ node_modules/
 
 # Environment variables
 .env
+
+# Auto-generated files
+populate-events.js
+database-update.sql

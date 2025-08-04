@@ -126,7 +126,7 @@ const RegisteredEventsList: React.FC<RegisteredEventsListProps> = React.memo(
 
           <button
             onClick={() => handleRemoveClick(event.id, isRegistered)}
-            className="ml-3 p-2 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
+            className="ml-3 p-2 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 cursor-pointer"
             title="Remove from registration"
           >
             <X className="w-4 h-4" />

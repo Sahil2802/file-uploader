@@ -104,7 +104,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
                 onClick={handleRemoveClick}
                 disabled={loading}
                 variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 cursor-pointer"
               >
                 {isActuallyRegistered
                   ? "Cancel Registration"
@@ -114,7 +114,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(
               <Button
                 onClick={() => onRegister(event.id)}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
               >
                 {loading ? "Registering..." : "Register"}
               </Button>

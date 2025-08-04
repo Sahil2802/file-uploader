@@ -268,7 +268,10 @@ const EventRegistration: React.FC = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
-            <div className="flex items-center space-x-3">
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+            >
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">E</span>
               </div>
@@ -277,7 +280,7 @@ const EventRegistration: React.FC = () => {
                   Event Registration
                 </h1>
               </div>
-            </div>
+            </button>
             <div className="flex items-center space-x-3">
               {(user?.user_metadata?.role === "admin" ||
                 user?.email?.includes("admin") ||
@@ -286,7 +289,7 @@ const EventRegistration: React.FC = () => {
                   onClick={() => (window.location.href = "/admin")}
                   variant="default"
                   size="sm"
-                  className="flex items-center bg-blue-600 text-white hover:bg-blue-700 text-xs px-3 py-1 h-7 font-medium"
+                  className="flex items-center bg-blue-600 text-white hover:bg-blue-700 text-xs px-3 py-1 h-7 font-medium cursor-pointer"
                 >
                   <svg
                     className="w-3 h-3 mr-1"
@@ -306,10 +309,10 @@ const EventRegistration: React.FC = () => {
               )}
 
               {/* Profile Avatar Dropdown */}
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative " ref={dropdownRef}>
                 <button
                   onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                  className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 rounded-full pl-2 pr-3 py-1 transition-colors duration-200"
+                  className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 rounded-full pl-2 pr-3 cursor-pointer py-1 transition-colors duration-200"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
@@ -336,7 +339,7 @@ const EventRegistration: React.FC = () => {
                         setShowProfileDropdown(false);
                         signOut();
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 mr-3" />
                       Sign Out
@@ -454,7 +457,7 @@ const EventRegistration: React.FC = () => {
                     <Button
                       onClick={handleSubmitRegistrations}
                       disabled={submitLoading}
-                      className="w-full mt-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg shadow-md transition-all duration-200"
+                      className="w-full mt-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
                     >
                       {submitLoading ? (
                         <div className="flex items-center justify-center">
