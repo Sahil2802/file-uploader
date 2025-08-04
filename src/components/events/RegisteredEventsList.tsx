@@ -27,6 +27,7 @@ const RegisteredEventsList: React.FC<RegisteredEventsListProps> = React.memo(
   }) => {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [eventToRemove, setEventToRemove] = useState<string | null>(null);
+    const [isProcessingRemoval, setIsProcessingRemoval] = useState(false);
 
     const handleRemoveClick = (eventId: string, isRegistered: boolean) => {
       if (isRegistered) {
@@ -41,6 +42,7 @@ const RegisteredEventsList: React.FC<RegisteredEventsListProps> = React.memo(
 
     const handleConfirmRemove = async () => {
       if (eventToRemove) {
+        setIsProcessingRemoval(true);
         const isRegisteredEvent = currentRegistrations.has(eventToRemove);
 
         if (isRegisteredEvent && onImmediateUnregister) {
@@ -54,6 +56,8 @@ const RegisteredEventsList: React.FC<RegisteredEventsListProps> = React.memo(
           // For selections, use regular unregister
           onUnregister(eventToRemove);
         }
+
+        setIsProcessingRemoval(false);
       }
       setShowConfirmation(false);
       setEventToRemove(null);
@@ -210,6 +214,7 @@ const RegisteredEventsList: React.FC<RegisteredEventsListProps> = React.memo(
           description="Are you sure you want to cancel your registration for this event? This action cannot be undone."
           confirmText="Yes, Cancel Registration"
           confirmVariant="destructive"
+          loading={isProcessingRemoval}
         />
       </div>
     );

@@ -30,6 +30,8 @@ const EventRegistration: React.FC = () => {
     new Set()
   );
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [immediateUnregisterLoading, setImmediateUnregisterLoading] =
+    useState(false);
   const [error, setError] = useState<string>("");
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -115,7 +117,7 @@ const EventRegistration: React.FC = () => {
     if (!user) return;
 
     try {
-      setSubmitLoading(true);
+      setImmediateUnregisterLoading(true);
       setError("");
 
       // Remove from pending registrations first
@@ -156,7 +158,7 @@ const EventRegistration: React.FC = () => {
       // Restore the registration in case of error
       setPendingRegistrations((prev) => new Set(prev).add(eventId));
     } finally {
-      setSubmitLoading(false);
+      setImmediateUnregisterLoading(false);
     }
   };
 
@@ -237,6 +239,9 @@ const EventRegistration: React.FC = () => {
   };
 
   const hasChanges = () => {
+    // Don't show submit button when immediate unregister is in progress
+    if (immediateUnregisterLoading) return false;
+
     const currentRegistrationIds = new Set(
       registrations.map((r) => r.event_id)
     );
