@@ -1,6 +1,8 @@
 import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
 import { router } from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
@@ -38,6 +40,9 @@ export const createApp = () => {
 
   // Rate limiting
   app.use("/api", apiLimiter);
+
+  // API Documentation
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Routes
   app.use("/api", router);
