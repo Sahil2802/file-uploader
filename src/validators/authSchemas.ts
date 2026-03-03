@@ -1,42 +1,54 @@
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
-//  Register Schema 
+extendZodWithOpenApi(z);
 
-export const registerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Name cannot be empty")
-    .max(100, "Name must be 100 characters or fewer"),
+//  Input Schemas (validation + OpenAPI) 
 
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email("Invalid email format"),
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name cannot be empty")
+      .max(100, "Name must be 100 characters or fewer"),
+    email: z.string().trim().toLowerCase().email("Invalid email format"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(72, "Password must be 72 characters or fewer"),
+  })
+  .openapi("RegisterInput");
 
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(72, "Password must be 72 characters or fewer"), // bcrypt hard limit
-});
+export const loginSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email("Invalid email format"),
+    password: z.string().min(1, "Password cannot be empty"),
+  })
+  .openapi("LoginInput");
 
-//  Login Schema 
+//  Response Schemas (documentation only) 
 
-export const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email("Invalid email format"),
+export const authResponseSchema = z
+  .object({
+    user: z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string().email(),
+      createdAt: z.string().datetime(),
+    }),
+    token: z.string(),
+  })
+  .openapi("AuthResponse");
 
-  password: z
-    .string()
-    .min(1, "Password cannot be empty"),
-});
+export const errorSchema = z
+  .object({
+    error: z.string(),
+    message: z.string(),
+  })
+  .openapi("Error");
 
 //  Inferred Types 
-// These give you full TypeScript type safety from the schema for free
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

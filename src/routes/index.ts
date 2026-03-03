@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authRouter } from "./authRoutes.js";
 import { taskRouter } from "./taskRoutes.js";
-import { authLimiter } from "../app.js";
+import { authLimiter } from "../config/rateLimiters.js";
 
 export const router = Router();
 

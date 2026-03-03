@@ -9,7 +9,7 @@ const start = async (): Promise<void> => {
     await connectDb();
     const app = createApp();
     app.listen(env.port, () =>
-      logger.info(`Server is running on port ${env.port}`),
+      logger.info(`Server is running on port http://localhost:${env.port}`),
     );
   } catch (error) {
     logger.error("Failed to start the server", error);

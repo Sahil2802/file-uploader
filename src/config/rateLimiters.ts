@@ -1,0 +1,19 @@
+import rateLimit from "express-rate-limit";
+
+// Strict limiter for auth endpoints (brute-force protection)
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,                   // max 20 attempts per window
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "TOO_MANY_REQUESTS", message: "Too many attempts, please try again later." },
+});
+
+// General limiter for all other API routes
+export const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,            // max 100 requests per minute
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please slow down." },
+});
