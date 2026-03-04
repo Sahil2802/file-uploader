@@ -7,6 +7,7 @@ export const authLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "TOO_MANY_REQUESTS", message: "Too many attempts, please try again later." },
+  skip: () => process.env.NODE_ENV === "test",
 });
 
 // General limiter for all other API routes
@@ -16,4 +17,5 @@ export const apiLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please slow down." },
+  skip: () => process.env.NODE_ENV === "test",
 });
